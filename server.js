@@ -45,7 +45,8 @@ const MAX_BODY = 1e6;
 http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   const json = (code, obj) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(obj)); };
-  if (url === '/') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(fs.readFileSync(path.join(__dirname, 'index.html'))); }
+  const STATIC = { '/': ['index.html', 'text/html'], '/words.js': ['words.js', 'text/javascript'] };
+  if (STATIC[url]) { res.writeHead(200, { 'content-type': STATIC[url][1] + '; charset=utf-8' }); return res.end(fs.readFileSync(path.join(__dirname, STATIC[url][0]))); }
   if (!url.startsWith('/api/')) { res.writeHead(404); return res.end(); }
   if (!authed(req)) return json(401, {});
 
@@ -64,6 +65,17 @@ http.createServer(async (req, res) => {
     if (!db.tg.chatId) return json(400, { error: 'Бот ещё не подключён' });
     try { await send('Тест ✅ Уведомления работают.'); return json(200, {}); }
     catch (e) { return json(502, { error: e.message }); }
+  }
+  if (url === '/api/translate') {
+    const p = new URL(req.url, 'http://x').searchParams, q = (p.get('q') || '').slice(0, 300).trim();
+    const from = p.get('from') === 'kk' ? 'kk' : 'ru', to = from === 'kk' ? 'ru' : 'kk';
+    if (!q) return json(400, {});
+    // ponytail: неофициальный бесплатный эндпоинт Google; сломается — заменить на Cloud Translation API с ключом
+    try {
+      const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(q)}`);
+      const d = await r.json();
+      return json(200, { text: d[0].map(x => x[0]).join('') });
+    } catch (e) { return json(502, { error: e.message }); }
   }
   json(404, {});
 }).listen(PORT, () => console.log(`kz-quiz: http://localhost:${PORT}`));

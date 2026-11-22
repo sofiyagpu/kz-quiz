@@ -67,22 +67,24 @@ h1{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
 input{width:100%;font:inherit;font-size:20px;padding:16px 18px;border:2px solid var(--line);border-radius:16px;background:#fff;outline:none;color:#000}
 input:focus{border-color:#000}
 .keys{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
-.keys button{flex:1;min-width:34px;padding:10px 0;border:0;border-radius:10px;background:#fff;font:inherit;font-size:18px;font-weight:600;cursor:pointer}
+.keys button{flex:1;min-width:34px;padding:10px 0;border:0;border-radius:10px;background:#fff;font:inherit;font-size:18px;font-weight:600;cursor:pointer;color:#000}
+.card .keys button{background:var(--soft)}
 .fb{padding:14px 18px;border-radius:16px;font-weight:600;margin-bottom:10px}
 .fb.good{background:#e8f6ee;color:var(--ok)}
 .fb.wrong{background:#fdecec;color:var(--bad)}
 .fb b{color:#000}
+#fb .ghost{margin-top:4px}
 
 /* финальные экраны */
 .splash{min-height:calc(100dvh - 48px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;background:#000;color:#fff;border-radius:var(--r);padding:32px 24px}
 .splash p{color:#aaa}
 .splash .btn{max-width:280px}
-.logo{font-size:56px;font-weight:900;letter-spacing:.04em;border-bottom:3px solid #fff;padding-bottom:4px}
+.logo{font-size:56px;font-weight:900;letter-spacing:.02em;border-bottom:3px solid #fff;padding-bottom:4px}
 .check{width:84px;height:84px;border:3px solid #fff;border-radius:50%;display:grid;place-items:center;font-size:40px}
 .splash form{width:100%;max-width:280px;display:flex;flex-direction:column;gap:10px;margin-top:20px}
 .splash input{background:#1a1a1a;border-color:#333;color:#fff}
 
-/* список слов */
+/* список слов и уровни */
 .list{padding:6px 20px}
 .w{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
 .w:last-child{border:0}
@@ -93,9 +95,9 @@ input:focus{border-color:#000}
 .dots i.on{background:#000}
 .lv small{font-size:11px;color:var(--mute)}
 .levels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.lvb{background:#fff;border:2px solid transparent;border-radius:18px;padding:14px 8px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:#000}
+.lvb{background:#fff;border:2px solid transparent;border-radius:18px;padding:14px 6px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:#000;text-align:center}
 .lvb b{font-size:22px}
-.lvb span{font-size:12px;font-weight:600}
+.lvb span{font-size:12px;font-weight:600;line-height:1.2}
 .lvb small{font-size:11px;color:var(--mute)}
 .lvb.on{background:#000;color:#fff;border-color:#000}
 .field{display:flex;justify-content:space-between;align-items:center;font-weight:600;gap:12px}
@@ -103,8 +105,19 @@ input:focus{border-color:#000}
 .note{color:var(--mute);font-size:14px;margin:14px 0}
 .note b{color:#000}
 
-nav{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:4px;padding:6px;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
-nav a{padding:11px 18px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;white-space:nowrap}
+/* перевод */
+.langs{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-weight:800}
+.langs b{flex:1}.langs b:last-child{text-align:right}
+.swap{width:42px;height:42px;border-radius:50%;border:0;background:var(--soft);font-size:18px;cursor:pointer;color:#000}
+.trrow{display:flex;gap:10px}
+.mic{flex:none;width:60px;border:0;border-radius:16px;background:#000;color:#fff;display:grid;place-items:center;cursor:pointer}
+.mic.rec{background:var(--bad);animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px rgba(214,69,69,.25)}}
+.tr p{color:#aaa;margin:6px 0 16px}
+
+nav{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:2px;padding:6px;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.12);max-width:calc(100% - 20px)}
+nav[hidden]{display:none}
+nav a{padding:10px 13px;border-radius:999px;text-decoration:none;font-weight:700;font-size:13px;white-space:nowrap}
 nav a.on{background:#000;color:#fff}
 #toast{position:fixed;top:16px;left:50%;transform:translate(-50%,-80px);background:#000;color:#fff;padding:12px 18px;border-radius:999px;font-weight:600;font-size:14px;transition:transform .3s;z-index:9;max-width:calc(100% - 32px);text-align:center}
 #toast.on{transform:translate(-50%,0)}
@@ -112,273 +125,18 @@ nav a.on{background:#000;color:#fff}
 </head>
 <body>
 <main id="app"></main>
-<nav hidden><a href="#home">Главная</a><a href="#words">Слова</a><a href="#settings">Настройки</a></nav>
+<nav hidden><a href="#home">Главная</a><a href="#words">Слова</a><a href="#tr">Перевод</a><a href="#settings">Настройки</a></nav>
 <div id="toast"></div>
+<script src="words.js"></script>
 <script>
-// Словарь: слово|перевод. Порядок = порядок изучения.
-const RAW = {
-A1: `сәлем|привет
-рахмет|спасибо
-иә|да
-жоқ|нет
-кешіріңіз|извините
-сау болыңыз|до свидания
-мен|я
-сен|ты
-сіз|вы (вежливо)
-ол|он, она
-біз|мы
-олар|они
-ана|мать
-әке|отец
-бала|ребёнок
-аға|старший брат
-әпке|старшая сестра
-іні|младший брат
-дос|друг
-үй|дом
-су|вода
-нан|хлеб
-шай|чай
-сүт|молоко
-ет|мясо
-алма|яблоко
-тамақ|еда
-кітап|книга
-мектеп|школа
-қала|город
-көше|улица
-есік|дверь
-терезе|окно
-үстел|стол
-орындық|стул
-күн|день; солнце
-түн|ночь
-таңертең|утром
-кеш|вечер
-бүгін|сегодня
-ертең|завтра
-кеше|вчера
-бір|один
-екі|два
-үш|три
-төрт|четыре
-бес|пять
-алты|шесть
-жеті|семь
-сегіз|восемь
-тоғыз|девять
-он|десять
-жүз|сто
-мың|тысяча
-үлкен|большой
-кіші|маленький
-жақсы|хороший
-жаман|плохой
-ақ|белый
-қара|чёрный
-қызыл|красный
-көк|синий, голубой
-жасыл|зелёный
-сары|жёлтый
-ит|собака
-мысық|кошка
-ат|лошадь
-құс|птица
-бас|голова
-көз|глаз
-қол|рука
-аяқ|нога
-ақша|деньги
-уақыт|время
-жыл|год
-ай|месяц; луна
-апта|неделя
-келу|приходить
-бару|идти (туда)
-жеу|есть (кушать)
-ішу|пить
-оқу|читать; учиться
-жазу|писать
-көру|видеть
-сөйлеу|говорить`,
-A2: `отбасы|семья
-жұмыс|работа
-дүкен|магазин
-базар|рынок
-аурухана|больница
-дәрігер|врач
-мұғалім|учитель
-оқушы|ученик
-пәтер|квартира
-бөлме|комната
-ас үй|кухня
-киім|одежда
-көйлек|платье; рубашка
-аяқ киім|обувь
-ауа райы|погода
-жаңбыр|дождь
-қар|снег
-жел|ветер
-суық|холодный
-ыстық|горячий, жаркий
-жылы|тёплый
-көктем|весна
-жаз|лето
-күз|осень
-қыс|зима
-дүйсенбі|понедельник
-сейсенбі|вторник
-сәрсенбі|среда
-бейсенбі|четверг
-жұма|пятница
-сенбі|суббота
-жексенбі|воскресенье
-сағат|час; часы
-көрші|сосед
-қонақ|гость
-сұрақ|вопрос
-жауап|ответ
-тіл|язык
-сөз|слово
-әріп|буква
-сурет|картина; фото
-ән|песня
-би|танец
-ойын|игра
-жол|дорога
-пойыз|поезд
-ұшақ|самолёт
-көлік|машина, транспорт
-аялдама|остановка
-оң|правый
-сол|левый
-алыс|далеко
-жақын|близко
-тез|быстро
-баяу|медленно
-қымбат|дорогой
-арзан|дешёвый
-жаңа|новый
-ескі|старый (о вещах)
-әдемі|красивый
-ақылды|умный
-бақытты|счастливый
-шаршау|уставать
-ұйықтау|спать
-тұру|вставать; стоять
-отыру|сидеть
-жүгіру|бегать
-тыңдау|слушать
-түсіну|понимать
-білу|знать
-сұрау|спрашивать
-сатып алу|покупать
-сату|продавать
-ашу|открывать
-жабу|закрывать
-көмектесу|помогать
-күту|ждать
-іздеу|искать
-табу|находить
-жуу|мыть
-пісіру|готовить (еду)
-бастау|начинать
-бітіру|заканчивать`,
-B1: `мүмкіндік|возможность
-тәжірибе|опыт
-білім|знание; образование
-ғылым|наука
-табиғат|природа
-қоршаған орта|окружающая среда
-мемлекет|государство
-ел|страна
-халық|народ
-тарих|история
-мәдениет|культура
-дәстүр|традиция
-мереке|праздник
-той|торжество, пир
-қоғам|общество
-заң|закон
-құқық|право
-міндет|обязанность
-шешім|решение
-мақсат|цель
-жоспар|план
-нәтиже|результат
-себеп|причина
-салдар|последствие
-мәселе|проблема
-пікір|мнение
-ой|мысль
-сезім|чувство
-қуаныш|радость
-қайғы|горе, печаль
-үміт|надежда
-сенім|доверие; вера
-құрмет|уважение
-махаббат|любовь
-достық|дружба
-бостандық|свобода
-денсаулық|здоровье
-ауру|болезнь
-кәсіп|профессия, дело
-жалақы|зарплата
-кеңсе|офис
-кездесу|встреча; встречаться
-келісім|соглашение
-дау|спор
-тәуелсіздік|независимость
-болашақ|будущее
-өткен|прошлое
-қазіргі|нынешний, современный
-маңызды|важный
-қиын|трудный
-оңай|лёгкий (простой)
-қауіпті|опасный
-пайдалы|полезный
-қажет|нужный, необходимо
-міндетті|обязательный
-мүмкін|возможно
-әрине|конечно
-сондықтан|поэтому
-себебі|потому что
-бірақ|но
-алайда|однако
-егер|если
-әйтпесе|иначе
-дегенмен|тем не менее
-дамыту|развивать
-өзгерту|изменять
-жақсарту|улучшать
-шешу|решать
-талқылау|обсуждать
-дәлелдеу|доказывать
-ұсыну|предлагать
-қабылдау|принимать
-қолдау|поддерживать
-сақтау|хранить
-жеткізу|доставлять
-ұмыту|забывать
-есте сақтау|запоминать
-таңдау|выбирать; выбор
-салыстыру|сравнивать
-сендіру|убеждать
-жауапкершілік|ответственность
-тәрбие|воспитание
-ұрпақ|поколение
-жер|земля
-аспан|небо
-тау|гора
-өзен|река
-көл|озеро
-дала|степь`};
-const LEVELS = { A1: 'Начальный', A2: 'Базовый', B1: 'Средний' };
-const WORDS = {};
-for (const l in RAW) for (const line of RAW[l].split('\n')) { const [kz, ru] = line.split('|'); WORDS[kz] = { kz, ru, l }; }
+const LEVELS = { A1: 'Начальный', A2: 'Базовый', B1: 'Средний', B2: 'Выше среднего', C1: 'Продвинутый' };
+const WORDS = {}; // kz → { kz, ru, l }; l = уровень или 'my' для своих слов
+for (const l in LIB) for (const line of LIB[l].trim().split('\n')) { const [kz, ru] = line.split('|'); WORDS[kz] = { kz, ru, l }; }
 // Через сколько дней проверять слово: индекс = сколько раз подряд был верный ответ
 const INT = [1, 3, 7, 14, 30, 60, 120];
+const PER_LEVEL = 5; // вопросов на уровень в тесте
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const LANG = { ru: 'Русский', kk: 'Қазақша' };
 
 const $ = s => document.querySelector(s);
 const app = $('#app'), nav = $('nav');
@@ -387,11 +145,13 @@ const streak = (days = []) => { const s = new Set(days); let n = 0, i = s.has(da
 const plural = (n, a, b, c) => { const m = n % 100, k = n % 10; return m > 10 && m < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; };
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const norm = s => s.trim().toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ');
+const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const daysUntil = d => Math.round((new Date(d) - new Date(day())) / 864e5);
 const dueList = () => Object.keys(S.cards).filter(k => WORDS[k] && S.cards[k].due <= day());
 const nextWord = () => Object.values(WORDS).find(w => w.l === S.level && !S.cards[w.kz]);
+const KEYS = `<div class="keys">${[...'әіңғүұқөһ'].map(ch => `<button type="button" onclick="ins('${ch}')">${ch}</button>`).join('')}</div>`;
 
-let S = { level: 'A1', remindAt: '20:00', cards: {}, days: [] }, tgOk = false, Q;
+let S = { level: 'A1', remindAt: '20:00', cards: {}, days: [], custom: {} }, tgOk = false, Q, P, from = 'ru';
 let pass = localStorage.getItem('pass') || '';
 
 async function api(method, url, body) {
@@ -399,12 +159,51 @@ async function api(method, url, body) {
   if (!r.ok) throw r.status;
   return r.json();
 }
-async function load() { const r = await api('GET', '/api/state'); S = { ...S, ...r.user }; tgOk = r.tg; }
+async function load() {
+  const r = await api('GET', '/api/state');
+  S = { ...S, ...r.user }; tgOk = r.tg;
+  for (const kz in S.custom) WORDS[kz] ||= { kz, ru: S.custom[kz], l: 'my' };
+}
 // ponytail: последняя запись побеждает; телефон и ПК синхронизируются при возврате во вкладку
 const save = () => api('PUT', '/api/state', S).catch(() => toast('Не сохранилось — проверь интернет'));
 
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2500); }
 function view(html, withNav) { app.innerHTML = html; nav.hidden = !withNav; scrollTo(0, 0); }
+function markToday() { const first = !S.days.includes(day()); if (first) S.days.push(day()); return first; }
+
+// ---------- уровень ----------
+const levelButtons = (mark = true) => Object.keys(LEVELS).map(l => {
+  const all = Object.values(WORDS).filter(w => w.l === l), got = all.filter(w => S.cards[w.kz]).length;
+  return `<button class="lvb${mark && S.level === l ? ' on' : ''}" onclick="pickLevel('${l}')"><b>${l}</b><span>${LEVELS[l]}</span><small>${got}/${all.length}</small></button>`;
+}).join('');
+function pickLevel(l) {
+  S.level = l; S.onboarded = true; save(); toast(`Уровень ${l} · ${LEVELS[l]}`);
+  if (location.hash === '#test') location.hash = '#home'; else go();
+}
+function onboarding() {
+  view(`<header class="head"><div><h1>Привет! 👋</h1><p>Какой у тебя уровень казахского?</p></div></header>
+    <div class="levels">${levelButtons(false)}</div>
+    <a class="card cta" href="#test"><span class="label">Не знаешь уровень?</span><h2>Определить по словам</h2>
+      <p>Переведи несколько слов — тест сам подберёт уровень</p><span class="btn">Пройти тест</span></a>`);
+}
+
+// Тест: по 5 слов с каждого уровня, начиная с A1. Две ошибки на уровне — это и есть твой уровень.
+function test() { P = { i: 0, n: 0, right: 0, used: new Set() }; pq(); }
+function pq() {
+  const ls = Object.keys(LEVELS), back = S.onboarded ? '#settings' : '#home';
+  if (P.n - P.right >= 2 || P.n === PER_LEVEL) {
+    if (P.n - P.right < 2 && P.i < ls.length - 1) { P.i++; P.n = P.right = 0; }
+    else {
+      const l = ls[P.i];
+      return view(`<div class="splash"><span class="label">Твой уровень</span><div class="logo">${l}</div><p>${LEVELS[l]}</p>
+        <button class="btn light" onclick="pickLevel('${l}')">Учить этот уровень</button><a class="btn ghost" href="${back}">Выбрать вручную</a></div>`);
+    }
+  }
+  const l = ls[P.i], w = shuffle(Object.values(WORDS).filter(x => x.l === l && !P.used.has(x.kz)))[0];
+  P.used.add(w.kz);
+  const head = `<div class="top"><a href="${back}" class="x">✕</a><div class="bar"><i style="width:${(P.i * PER_LEVEL + P.n) / (ls.length * PER_LEVEL) * 100}%"></i></div><span class="label">${l}</span></div>`;
+  mc(head, w, false, ok => { P.n++; if (ok) P.right++; pq(); }, true);
+}
 
 // ---------- экраны ----------
 function home() {
@@ -449,8 +248,7 @@ function learn() {
 function know(kz) { S.cards[kz] = { box: 2, due: day(INT[2]) }; save(); toast('Проверю через неделю'); learn(); }
 function learned(kz) {
   S.cards[kz] = { box: 0, due: day(INT[0]) };
-  const first = !S.days.includes(day());
-  if (first) S.days.push(day());
+  const first = markToday();
   save();
   if (!first) { toast('Проверю завтра'); return learn(); }
   const n = streak(S.days);
@@ -488,66 +286,118 @@ function ask() {
     <p>${Q.right} из ${Q.total} с первого раза</p><a class="btn ghost" href="#home">На главную</a></div>`);
   const kz = Q.queue[0], w = WORDS[kz], c = S.cards[kz];
   const head = `<div class="top"><a href="#home" class="x">✕</a><div class="bar"><i style="width:${Q.done / Q.total * 100}%"></i></div><span class="label">${Q.done}/${Q.total}</span></div>`;
+  if (c.box < 2) return mc(head, w, Math.random() < .5, answer);
 
-  if (c.box >= 2) { // знакомые слова — вписать ответ
-    view(head + `<div class="card q"><span class="label">Напиши по-казахски</span><div class="big">${w.ru}</div></div>
-      <form id="f"><input id="inp" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Ответ…">
-      <div class="keys">${[...'әіңғүұқөһ'].map(ch => `<button type="button" onclick="ins('${ch}')">${ch}</button>`).join('')}</div>
-      <div id="fb"></div><button class="btn" id="go">Проверить</button></form>`);
-    const inp = $('#inp');
-    inp.focus();
-    let res = null;
-    $('#f').onsubmit = e => {
-      e.preventDefault();
-      if (res !== null) return answer(res);
-      if (!norm(inp.value)) return;
-      res = norm(inp.value) === norm(kz);
-      inp.readOnly = true;
-      $('.keys').remove();
-      if (res) { $('#fb').innerHTML = '<div class="fb good">Верно!</div>'; return setTimeout(() => answer(true), 700); }
-      $('#fb').innerHTML = `<div class="fb wrong">Правильно: <b>${kz}</b></div>`;
-      $('#go').textContent = 'Дальше';
-      $('#go').insertAdjacentHTML('beforebegin', '<button type="button" class="btn light" style="margin-bottom:10px" onclick="answer(true)">Засчитать как верно</button>');
-    };
-    return;
-  }
+  // знакомые слова — вписать ответ
+  view(head + `<div class="card q"><span class="label">Напиши по-казахски</span><div class="big">${esc(w.ru)}</div></div>
+    <form id="f"><input id="inp" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Ответ…">
+    ${KEYS}<div id="fb"></div><button class="btn" id="go">Проверить</button></form>`);
+  const inp = $('#inp');
+  inp.focus();
+  let res = null;
+  $('#f').onsubmit = e => {
+    e.preventDefault();
+    if (res !== null) return answer(res);
+    if (!norm(inp.value)) return;
+    res = norm(inp.value) === norm(kz);
+    inp.readOnly = true;
+    $('.keys').remove();
+    if (res) { $('#fb').innerHTML = '<div class="fb good">Верно!</div>'; return setTimeout(() => answer(true), 700); }
+    $('#fb').innerHTML = `<div class="fb wrong">Правильно: <b>${esc(kz)}</b></div>`;
+    $('#go').textContent = 'Дальше';
+    $('#go').insertAdjacentHTML('beforebegin', '<button type="button" class="btn light" style="margin-bottom:10px" onclick="answer(true)">Засчитать как верно</button>');
+  };
+}
 
-  const toKz = Math.random() < .5;
-  const pool = Object.values(WORDS).filter(x => x.l === w.l && x.kz !== kz);
+// Вопрос с 4 вариантами. done(ok) вызывается один раз.
+function mc(head, w, toKz, done, canSkip) {
+  let pool = Object.values(WORDS).filter(x => x.l === w.l && x.kz !== w.kz);
+  if (pool.length < 3) pool = Object.values(WORDS).filter(x => x.kz !== w.kz);
   const opts = shuffle([w, ...shuffle(pool).slice(0, 3)]);
-  view(head + `<div class="card q"><span class="label">${toKz ? 'Как по-казахски?' : 'Что значит?'}</span><div class="big">${toKz ? w.ru : kz}</div></div>
-    <div id="opts">${opts.map(o => `<button class="opt" data-k="${o.kz}">${toKz ? o.kz : o.ru}</button>`).join('')}</div><div id="fb"></div>`);
+  mc.done = done;
+  view(head + `<div class="card q"><span class="label">${toKz ? 'Как по-казахски?' : 'Что значит?'}</span><div class="big">${esc(toKz ? w.ru : w.kz)}</div></div>
+    <div id="opts">${opts.map(o => `<button class="opt" data-k="${esc(o.kz)}">${esc(toKz ? o.kz : o.ru)}</button>`).join('')}</div>
+    <div id="fb">${canSkip ? '<button class="btn ghost" onclick="mc.done(false)">Не знаю</button>' : ''}</div>`);
   $('#opts').onclick = e => {
     const b = e.target.closest('.opt');
     if (!b) return;
     $('#opts').classList.add('lock');
-    const ok = b.dataset.k === kz;
+    const ok = b.dataset.k === w.kz;
     b.classList.add(ok ? 'ok' : 'bad');
-    if (ok) return setTimeout(() => answer(true), 600);
-    $(`.opt[data-k="${kz}"]`).classList.add('ok');
-    $('#fb').innerHTML = '<button class="btn" id="nx" onclick="answer(false)">Дальше</button>';
+    if (ok) { $('#fb').innerHTML = ''; return setTimeout(() => done(true), 600); }
+    [...document.querySelectorAll('.opt')].find(o => o.dataset.k === w.kz).classList.add('ok');
+    $('#fb').innerHTML = '<button class="btn" id="nx" onclick="mc.done(false)">Дальше</button>';
   };
 }
 function ins(ch) { const i = $('#inp'); if (i.readOnly) return; i.setRangeText(ch, i.selectionStart, i.selectionEnd, 'end'); i.focus(); }
 
+// ---------- перевод ----------
+function tr() {
+  const to = from === 'ru' ? 'kk' : 'ru';
+  view(`<header class="head"><div><h1>Перевод</h1><p>Продиктуй или напиши непонятное слово</p></div></header>
+    <div class="card">
+      <div class="langs"><b>${LANG[from]}</b><button class="swap" onclick="from='${to}';tr()" aria-label="Поменять языки">⇄</button><b>${LANG[to]}</b></div>
+      <form id="tf"><div class="trrow"><input id="inp" placeholder="${from === 'ru' ? 'Слово по-русски' : 'Сөз қазақша'}" autocomplete="off" spellcheck="false">
+        ${SR ? `<button type="button" id="mic" class="mic" onclick="listen()" aria-label="Продиктовать"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>` : ''}</div>
+        ${from === 'kk' ? KEYS : ''}
+        <button class="btn" style="margin-top:12px">Перевести</button></form>
+      ${SR ? '' : '<p class="note">Голосовой ввод в этом браузере не работает — открой сайт в Chrome или Safari.</p>'}
+    </div>
+    <div id="tres"></div>`, true);
+  $('#tf').onsubmit = e => { e.preventDefault(); translate(); };
+}
+function listen() {
+  const r = new SR(), mic = $('#mic'), inp = $('#inp');
+  r.lang = from === 'ru' ? 'ru-RU' : 'kk-KZ';
+  r.interimResults = true;
+  r.onresult = e => { inp.value = [...e.results].map(x => x[0].transcript).join(''); };
+  r.onerror = e => toast({ 'not-allowed': 'Разреши доступ к микрофону', 'language-not-supported': 'Браузер не распознаёт казахский — попробуй Chrome', 'no-speech': 'Ничего не слышно' }[e.error] || 'Не удалось распознать');
+  r.onend = () => { mic.classList.remove('rec'); if (inp.isConnected && inp.value.trim()) translate(); };
+  mic.classList.add('rec');
+  inp.value = '';
+  r.start();
+}
+async function translate() {
+  const q = $('#inp').value.trim().toLowerCase(), box = $('#tres'), dir = from;
+  if (!q) return;
+  const n = norm(q);
+  const w = Object.values(WORDS).find(w => dir === 'kk' ? norm(w.kz) === n : w.ru.split(/[;,]/).some(p => norm(p.replace(/\(.*?\)/g, '')) === n));
+  let kz, ru, src;
+  if (w) [kz, ru, src] = [w.kz, w.ru, w.l === 'my' ? 'Твоё слово' : `Из библиотеки · ${w.l}`];
+  else {
+    box.innerHTML = '<div class="card note">Перевожу…</div>';
+    try {
+      const t = (await api('GET', `/api/translate?from=${dir}&q=${encodeURIComponent(q)}`)).text.toLowerCase();
+      [kz, ru, src] = dir === 'ru' ? [t, q, 'Google Переводчик'] : [q, t, 'Google Переводчик'];
+    } catch { box.innerHTML = ''; return toast('Перевод сейчас недоступен'); }
+  }
+  const has = !!S.cards[kz];
+  box.innerHTML = `<div class="card dark tr"><span class="label">${src}</span><div class="big">${esc(dir === 'ru' ? kz : ru)}</div><p>${esc(dir === 'ru' ? ru : kz)}</p>
+    ${has ? '<span class="label">Уже в твоих словах ✓</span>' : '<button class="btn" id="add">+ Учить это слово</button>'}</div>`;
+  if (!has) $('#add').onclick = () => {
+    if (!WORDS[kz]) { S.custom[kz] = ru; WORDS[kz] = { kz, ru, l: 'my' }; }
+    S.cards[kz] = { box: 0, due: day(INT[0]) };
+    toast(markToday() ? '🔥 Добавлено, стрик продлён!' : 'Добавлено — проверю завтра');
+    save(); translate();
+  };
+}
+
+// ---------- слова и настройки ----------
 function words() {
   const list = Object.entries(S.cards).filter(([k]) => WORDS[k]).sort((a, b) => a[1].due.localeCompare(b[1].due));
   view(`<header class="head"><h1>Мои слова</h1><span class="pill">${list.length}</span></header>
     ${list.length ? `<div class="card list">${list.map(([kz, c]) => {
       const d = daysUntil(c.due);
-      return `<div class="w"><div><b>${kz}</b><span>${WORDS[kz].ru}</span></div>
+      return `<div class="w"><div><b>${esc(kz)}</b><span>${esc(WORDS[kz].ru)}</span></div>
         <div class="lv"><div class="dots">${INT.slice(1).map((_, i) => `<i class="${i < c.box ? 'on' : ''}"></i>`).join('')}</div>
         <small>${d <= 0 ? 'повторить сегодня' : `через ${d} ${plural(d, 'день', 'дня', 'дней')}`}</small></div></div>`;
     }).join('')}</div>` : `<a class="card" href="#learn">Пока пусто. <b>Выучи первое слово →</b></a>`}`, true);
 }
 
 function settings() {
-  const lv = Object.keys(LEVELS).map(l => {
-    const all = Object.values(WORDS).filter(w => w.l === l), got = all.filter(w => S.cards[w.kz]).length;
-    return `<button class="lvb${S.level === l ? ' on' : ''}" onclick="S.level='${l}';save();settings()"><b>${l}</b><span>${LEVELS[l]}</span><small>${got}/${all.length}</small></button>`;
-  }).join('');
   view(`<header class="head"><h1>Настройки</h1></header>
-    <div class="label sec">Уровень</div><div class="levels">${lv}</div>
+    <div class="label sec">Уровень</div><div class="levels">${levelButtons()}</div>
+    <a class="btn light" href="#test">Определить уровень по словам</a>
     <div class="label sec">Напоминание в Telegram</div>
     <div class="card">
       <label class="field">Время напоминания<input type="time" value="${S.remindAt}" onchange="S.remindAt=this.value;save();toast('Сохранено')"></label>
@@ -567,9 +417,10 @@ function login(wrong) {
 }
 
 // ---------- запуск ----------
-const routes = { home, learn, review, words, settings };
+const routes = { home, learn, review, words, tr, settings, test };
 function go() {
   const r = location.hash.slice(1);
+  if (!S.onboarded && !Object.keys(S.cards).length && r !== 'test') return onboarding();
   (routes[r] || home)();
   nav.querySelectorAll('a').forEach(a => a.classList.toggle('on', a.hash === '#' + (routes[r] ? r : 'home')));
 }
@@ -582,7 +433,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden || !pass) return;
   load().then(() => ['', 'home', 'words', 'settings'].includes(location.hash.slice(1)) && go()).catch(() => {});
 });
-addEventListener('keydown', e => { // ПК: 1–4 — варианты, пробел — перевернуть
+addEventListener('keydown', e => { // ПК: 1–4 — варианты, пробел — перевернуть, Enter — дальше
   if (e.target.tagName === 'INPUT') return;
   const o = document.querySelectorAll('.opt')[e.key - 1];
   if (o) return o.click();
