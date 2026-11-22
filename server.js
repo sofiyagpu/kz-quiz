@@ -33,10 +33,18 @@ const tg = (method, body) => fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${m
   method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
 }).then(r => r.json());
 const send = async (chatId, text, extra) => { const r = await tg('sendMessage', { chat_id: chatId, text, ...extra }); if (!r.ok) throw Error(r.description); };
-const notify = (ids, text) => Promise.all(ids.filter(Boolean).map(id => send(id, text).catch(e => console.error('tg:', e.message))));
+const notify = (ids, text) => Promise.all(ids.filter(Boolean).map(id => send(id, text, openBtn()).catch(e => console.error('tg:', e.message))));
 const parentsOf = login => Object.values(db.users).filter(p => p.role === 'parent' && p.children?.includes(login));
 const unlinkTg = id => { for (const u of Object.values(db.users)) if (u.tgId === id) delete u.tgId; };
-const openBtn = SITE_URL.startsWith('https://') ? { reply_markup: { inline_keyboard: [[{ text: 'Открыть kz-quiz', web_app: { url: SITE_URL } }]] } } : {};
+let appUrl = '';
+const openBtn = () => appUrl ? { reply_markup: { inline_keyboard: [[{ text: 'Открыть kz-quiz', web_app: { url: appUrl } }]] } } : {};
+// Кнопка меню бота открывает сайт как Mini App. Адрес — SITE_URL или https-адрес, с которого зашёл вошедший пользователь.
+async function setMenu(url) {
+  if (!BOT_TOKEN || appUrl === url || !url.startsWith('https://')) return;
+  const r = await tg('setChatMenuButton', { menu_button: { type: 'web_app', text: 'kz-quiz', web_app: { url } } });
+  if (!r.ok) return console.error('Mini App:', r.description);
+  appUrl = url; console.log('Mini App подключён:', url);
+}
 
 // Проверка подписи Telegram Mini App (initData)
 function tgUser(initData) {
@@ -56,7 +64,7 @@ async function poll() {
     try {
       if (!BOT_NAME) {
         BOT_NAME = (await tg('getMe', {})).result?.username || '';
-        if (openBtn.reply_markup) await tg('setChatMenuButton', { menu_button: { type: 'web_app', text: 'kz-quiz', web_app: { url: SITE_URL } } });
+        if (SITE_URL) await setMenu(SITE_URL);
       }
       const r = await tg('getUpdates', { offset: db.tgOffset || 0, timeout: 50 });
       if (!r.ok) throw Error(r.description);
@@ -66,7 +74,7 @@ async function poll() {
         if (!m?.text?.startsWith('/start')) continue;
         const code = m.text.split(' ')[1], u = code && Object.values(db.users).find(x => x.linkCode === code);
         if (u) { unlinkTg(m.chat.id); u.tgId = m.chat.id; delete u.linkCode; }
-        await send(m.chat.id, u ? `Готово, ${u.name}! Уведомления будут приходить сюда.` : 'Сәлем! Это kz-quiz — казахский каждый день.', openBtn).catch(() => {});
+        await send(m.chat.id, u ? `Готово, ${u.name}! Уведомления будут приходить сюда.` : 'Сәлем! Это kz-quiz — казахский каждый день.', openBtn()).catch(() => {});
       }
       if (r.result.length) save();
     } catch (e) { console.error('tg poll:', e.message); await sleep(5000); }
@@ -129,9 +137,10 @@ http.createServer(async (req, res) => {
       save(); return json(200);
     }
     if (route === 'GET /api/me') {
+      if (!SITE_URL && !appUrl) await setMenu(`${String(req.headers['x-forwarded-proto'] || 'http').split(',')[0]}://${req.headers.host}/`).catch(() => {});
       if (!u.tgId && BOT_NAME && !u.linkCode) { u.linkCode = crypto.randomBytes(6).toString('hex'); save(); }
       return json(200, {
-        login, name: u.name, role: u.role, admin: !!u.admin, data: u.data || {}, tg: !!u.tgId,
+        login, name: u.name, role: u.role, admin: !!u.admin, data: u.data || {}, tg: !!u.tgId, miniApp: u.admin ? appUrl : undefined,
         tgLink: !u.tgId && BOT_NAME ? `https://t.me/${BOT_NAME}?start=${u.linkCode}` : '',
       });
     }
