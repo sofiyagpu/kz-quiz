@@ -82,7 +82,7 @@ async function tick() {
     u.last = today; save();
     const done = (d.days || []).includes(today), n = streak(d.days);
     const due = Object.values(d.cards || {}).filter(c => !c.known && c.due <= today).length, lines = [];
-    if (!done) lines.push(n ? `🔥 Стрик ${n} дн. под угрозой — выучи сегодня 3 слова!` : '🌱 Выучи сегодня 3 слова и начни стрик.');
+    if (!done) lines.push(n ? `🔥 Стрик ${n} дн. под угрозой — выучи сегодня слова дня (${d.perDay || 3} шт.)!` : `🌱 Выучи сегодня слова дня (${d.perDay || 3} шт.) и начни стрик.`);
     if (due) lines.push(`📝 Ждёт квиз: ${due} сл.`);
     if (lines.length && u.tgId) await notify([u.tgId], lines.join('\n'));
     if (!done) await notify(parentsOf(login).map(p => p.tgId), `⏰ ${u.name}: слова на сегодня ещё не выучены.`);

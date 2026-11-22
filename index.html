@@ -41,7 +41,8 @@ h1{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
 .wd i{width:30px;height:30px;border-radius:50%;border:2px solid #333;display:grid;place-items:center;font-style:normal}
 .wd.today{color:#fff}.wd.today i{border-color:#fff}
 .wd.on i{background:#fff;border-color:#fff}
-.wd.on i::after{content:"✓";color:#000;font-weight:900;font-size:14px}
+.wd.on i{color:#000}
+.ic{flex:none;vertical-align:-.2em}
 .cta h2{font-size:22px;font-weight:800;margin:8px 0 4px;letter-spacing:-.01em}
 .cta p{color:var(--mute);font-size:14px;margin-bottom:16px}
 .dw{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -170,7 +171,26 @@ const WORDS = {}; // kz → { kz, ru, l }; l = уровень или 'my' для
 for (const l in LIB) for (const line of LIB[l].trim().split('\n')) { const [kz, ru] = line.split('|'); WORDS[kz] = { kz, ru, l }; }
 // Через сколько дней проверять слово: индекс = сколько раз подряд был верный ответ
 const INT = [1, 3, 7, 14, 30, 60, 120];
-const DAILY = 3, PER_LEVEL = 5;
+const PER_LEVEL = 5, PER_DAY = [1, 2, 3, 5, 10];
+const perDay = () => S.perDay || 3;
+// Иконки: 24×24, линия 2px, цвет = currentColor
+const ICONS = {
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+  flame: '<path d="M12 3c.8 3.6 5 5.6 5 10.2A5 5 0 0 1 7 13.2c0-2.3 1-3.9 2.4-5 .3 1.7 1.1 2.7 2.1 3C11.1 8.8 11.2 5.8 12 3z"/>',
+  trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M10 17h4"/>',
+  cards: '<rect x="3" y="7" width="14" height="13" rx="2"/><path d="M7 4h12a2 2 0 0 1 2 2v11"/>',
+  pen: '<path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/>',
+  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  quiz: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 13l2 2 4-4"/>',
+  swap: '<path d="M4 8h15l-4-4M20 16H5l4 4"/>',
+  left: '<path d="M15 5l-7 7 7 7"/>',
+  right: '<path d="M9 5l7 7-7 7"/>',
+  shuffle: '<path d="M3 7h3c4.5 0 6.5 10 11 10h3M3 17h3c1.6 0 2.8-1.3 3.8-3M14.2 10C15.2 8.3 16.4 7 18 7h2M17 4l3 3-3 3M17 14l3 3-3 3"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+};
+const ic = (n, s = 20) => `<svg class="ic" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const LANG = { ru: 'Русский', kk: 'Қазақша' };
 const TG = window.Telegram?.WebApp, inTG = !!TG?.initData;
@@ -223,7 +243,7 @@ const report = body => api('POST', '/api/report', body).catch(() => {});
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2500); }
 function view(html, withNav) { app.innerHTML = html; nav.hidden = !withNav; scrollTo(0, 0); }
 function markToday() { const first = !S.days.includes(day()); if (first) S.days.push(day()); return first; }
-const topBar = (back, pct, label) => `<div class="top"><a href="${back}" class="x">✕</a><div class="bar"><i style="width:${pct * 100}%"></i></div><span class="label">${label}</span></div>`;
+const topBar = (back, pct, label) => `<div class="top"><a href="${back}" class="x" aria-label="Закрыть">${ic('close', 18)}</a><div class="bar"><i style="width:${pct * 100}%"></i></div><span class="label">${label}</span></div>`;
 const splash = (icon, title, text, buttons) => view(`<div class="splash">${icon ? `<div class="check">${icon}</div>` : ''}<h1>${title}</h1><p>${text}</p>${buttons}</div>`);
 const homeBtn = '<a class="btn ghost" href="#home">На главную</a>';
 
@@ -239,8 +259,9 @@ function pickLevel(l) {
   if (location.hash === '#test') location.hash = '#home'; else go();
 }
 function onboarding() {
-  view(`<header class="head"><div><h1>Привет, ${esc(ME.name)}! 👋</h1><p>Какой у тебя уровень казахского?</p></div></header>
+  view(`<header class="head"><div><h1>Привет, ${esc(ME.name)}!</h1><p>Какой у тебя уровень казахского?</p></div></header>
     <div class="levels">${levelButtons(false)}</div>
+    <div class="label sec">Сколько слов в день учить</div>${perDayButtons()}
     <a class="card cta" href="#test"><span class="label">Не знаешь уровень?</span><h2>Определить по словам</h2>
       <p>Переведи несколько слов — тест сам подберёт уровень</p><span class="btn">Пройти тест</span></a>`);
 }
@@ -262,9 +283,20 @@ function pq() {
 }
 
 // ---------- слова дня ----------
+const moreLabel = () => `Ещё ${perDay()} ${plural(perDay(), 'слово', 'слова', 'слов')}`;
+const perDayButtons = () => `<div class="seg">${PER_DAY.map(n => `<button class="${perDay() === n ? 'on' : ''}" onclick="setPerDay(${n})">${n}</button>`).join('')}</div>`;
+function setPerDay(n) {
+  S.perDay = n;
+  if (S.daily?.date === day()) { // пересобрать сегодняшний набор: выученное остаётся, лишние невыученные уходят
+    const learned = S.daily.words.filter(k => S.cards[k]);
+    S.daily.goal = Math.max(n, learned.length);
+    S.daily.words = [...learned, ...S.daily.words.filter(k => !S.cards[k])].slice(0, S.daily.goal);
+  }
+  save(); toast(`${n} ${plural(n, 'слово', 'слова', 'слов')} в день`); go();
+}
 function daily() {
   let changed = false;
-  if (S.daily?.date !== day()) { S.daily = { date: day(), goal: DAILY, words: [], reported: [] }; changed = true; }
+  if (S.daily?.date !== day()) { S.daily = { date: day(), goal: perDay(), words: [], reported: [] }; changed = true; }
   while (S.daily.words.length < S.daily.goal) { const w = nextWord(); if (!w) break; S.daily.words.push(w.kz); changed = true; }
   if (changed) save();
   return S.daily;
@@ -277,12 +309,12 @@ function home() {
   const learnedToday = d.words.length - pend.length, doneToday = !pend.length && !unrep.length && d.words.length;
   const week = [-6, -5, -4, -3, -2, -1, 0].map(i => {
     const x = day(i), wd = new Date(x + 'T12:00').toLocaleDateString('ru', { weekday: 'short' });
-    return `<div class="wd${S.days.includes(x) ? ' on' : ''}${i ? '' : ' today'}"><i></i>${wd}</div>`;
+    return `<div class="wd${S.days.includes(x) ? ' on' : ''}${i ? '' : ' today'}"><i>${S.days.includes(x) ? ic('check', 16) : ''}</i>${wd}</div>`;
   }).join('');
-  const [title, sub, btn, href] = !d.words.length ? ['Уровень пройден 🎉', 'Выбери следующий уровень в профиле', 'Выбрать уровень', '#settings']
-    : pend.length ? [`Выучи ${pend.length} ${plural(pend.length, 'слово', 'слова', 'слов')}`, n ? 'Иначе стрик сгорит в полночь' : 'Три слова — и стрик начат', learnedToday ? 'Продолжить' : 'Учить', '#learn']
+  const [title, sub, btn, href] = !d.words.length ? ['Уровень пройден', 'Выбери следующий уровень в профиле', 'Выбрать уровень', '#settings']
+    : pend.length ? [`Выучи ${pend.length} ${plural(pend.length, 'слово', 'слова', 'слов')}`, n ? 'Иначе стрик сгорит в полночь' : `${perDay()} ${plural(perDay(), 'слово', 'слова', 'слов')} — и стрик начат`, learnedToday ? 'Продолжить' : 'Учить', '#learn']
     : unrep.length ? ['Осталось закрепить', 'Короткий квиз по новым словам', 'Закрепить', '#learn']
-    : ['Сегодня выполнено ✓', 'Завтра по этим словам будет квиз', nextWord() ? 'Ещё 3 слова' : 'Уровень пройден', nextWord() ? '#more' : '#settings'];
+    : [`Сегодня выполнено ${ic('check', 22)}`, 'Завтра по этим словам будет квиз', nextWord() ? moreLabel() : 'Уровень пройден', nextWord() ? '#more' : '#settings'];
   view(`
     <header class="head"><div><h1>kz-quiz</h1><p>${new Date().toLocaleDateString('ru', { weekday: 'long', day: 'numeric', month: 'long' })}</p></div>
       <a class="pill" href="#settings">${S.level} · ${LEVELS[S.level]}</a></header>
@@ -292,7 +324,7 @@ function home() {
       <div class="week">${week}</div>
     </section>
     <a class="card cta" href="${href}">
-      <span class="label">Слова дня · ${learnedToday}/${d.words.length || DAILY}</span>
+      <span class="label">Слова дня · ${learnedToday}/${d.words.length || perDay()}</span>
       ${d.words.length ? `<div class="dw">${d.words.map(k => S.cards[k] ? `<span class="on">${esc(k)}</span>` : '<span>• • •</span>').join('')}</div>` : ''}
       <h2>${title}</h2><p>${sub}</p><span class="btn">${btn}</span>
     </a>
@@ -317,7 +349,7 @@ function learn() {
       <div class="face card"><span class="label">Қазақша</span><div class="big">${w.kz}</div><span class="hint">нажми, чтобы перевернуть</span></div>
       <div class="face card dark back"><span class="label">По-русски</span><div class="big">${w.ru}</div><span class="hint">${w.kz}</span></div>
     </div></div>
-    <div class="row"><button class="btn light" onclick="knowDaily('${kz}')">Уже знаю</button><button class="btn" onclick="learnedDaily('${kz}')">Выучено ✓</button></div>`);
+    <div class="row"><button class="btn light" onclick="knowDaily('${kz}')">Уже знаю</button><button class="btn" onclick="learnedDaily('${kz}')">Выучено</button></div>`);
 }
 function knowDaily(kz) {
   S.cards[kz] = { known: true };
@@ -332,10 +364,10 @@ function finishDaily(batch) {
   save();
   report({ kind: 'daily', items: batch.map(k => ({ kz: k, ru: WORDS[k].ru })) });
   const n = streak(S.days);
-  splash('🔥', first ? `${n} ${plural(n, 'день', 'дня', 'дней')}` : 'Готово!', 'Слова дня выучены. Завтра по ним будет квиз.',
-    (nextWord() ? '<a class="btn light" href="#more">Ещё 3 слова</a>' : '') + homeBtn);
+  splash(ic('flame', 40), first ? `${n} ${plural(n, 'день', 'дня', 'дней')}` : 'Готово!', 'Слова дня выучены. Завтра по ним будет квиз.',
+    (nextWord() ? '<a class="btn light" href="#more">' + moreLabel() + '</a>' : '') + homeBtn);
 }
-function more() { daily(); S.daily.goal += DAILY; save(); location.replace('#learn'); }
+function more() { daily(); S.daily.goal += perDay(); save(); location.replace('#learn'); }
 
 // ---------- квиз-движок ----------
 // steps: 1 — только выбор, 2 — выбор, потом письмо (как «Заучивание» в Quizlet). srs: двигать интервалы повторения.
@@ -413,7 +445,7 @@ function quiz() {
   const due = dueList();
   if (!due.length) {
     const next = myWords().map(k => S.cards[k].due).sort()[0];
-    return splash('✓', 'Квиз пройден', next ? `Следующий квиз через ${daysUntil(next)} ${plural(daysUntil(next), 'день', 'дня', 'дней')}` : 'Сначала выучи слова дня — квиз будет завтра', homeBtn);
+    return splash(ic('check', 40), 'Квиз пройден', next ? `Следующий квиз через ${daysUntil(next)} ${plural(daysUntil(next), 'день', 'дня', 'дней')}` : 'Сначала выучи слова дня — квиз будет завтра', homeBtn);
   }
   startQuiz(due, { srs: true, title: 'Квиз', back: '#home', onDone: quizDone });
 }
@@ -435,10 +467,10 @@ function practice() {
     <div class="seg"><button class="${scope === 'all' ? 'on' : ''}" onclick="scope='all';practice()">Все мои · ${all}</button>
       <button class="${scope === 'today' ? 'on' : ''}" onclick="scope='today';practice()">Сегодня · ${today}</button></div>
     <div class="modes">
-      <a class="card mode" href="#cards"><i>Аа</i><b>Карточки</b><span>Листай и переворачивай</span></a>
-      <a class="card mode" href="#drill"><i>✎</i><b>Заучивание</b><span>Выбор, потом письмо</span></a>
-      <a class="card mode" href="#match"><i>⚡</i><b>Подбор</b><span>Найди пары на время${S.bestMatch ? ` · рекорд ${S.bestMatch} с` : ''}</span></a>
-      <a class="card mode${due ? ' dark' : ''}" href="#quiz"><i>✓</i><b>Квиз</b><span>${due ? `${due} ждут проверки` : 'Пока нечего проверять'}</span></a>
+      <a class="card mode" href="#cards"><i>${ic('cards')}</i><b>Карточки</b><span>Листай и переворачивай</span></a>
+      <a class="card mode" href="#drill"><i>${ic('pen')}</i><b>Заучивание</b><span>Выбор, потом письмо</span></a>
+      <a class="card mode" href="#match"><i>${ic('bolt')}</i><b>Подбор</b><span>Найди пары на время${S.bestMatch ? ` · рекорд ${S.bestMatch} с` : ''}</span></a>
+      <a class="card mode${due ? ' dark' : ''}" href="#quiz"><i>${ic('quiz')}</i><b>Квиз</b><span>${due ? `${due} ждут проверки` : 'Пока нечего проверять'}</span></a>
     </div>
     <div class="label sec">Мои слова${knew ? ` · ещё ${knew} отмечено «Уже знаю»` : ''}</div>
     ${list.length ? `<div class="card list">${list.map(kz => {
@@ -446,7 +478,7 @@ function practice() {
       return `<div class="w"><div><b>${esc(kz)}</b><span>${esc(WORDS[kz].ru)}</span></div>
         <div class="lv"><div class="dots">${INT.slice(1).map((_, i) => `<i class="${i < c.box ? 'on' : ''}"></i>`).join('')}</div>
         <small>${d <= 0 ? 'в квизе сегодня' : `квиз через ${d} ${plural(d, 'день', 'дня', 'дней')}`}</small></div></div>`;
-    }).join('')}</div>` : '<a class="card" href="#learn">Пока пусто. <b>Выучи слова дня →</b></a>'}`, true);
+    }).join('')}</div>` : '<a class="card" href="#learn">Пока пусто. <b>Выучи слова дня</b></a>'}`, true);
 }
 const noWords = () => splash('', 'Пока нет слов', scope === 'today' ? 'Сегодня ещё ничего не выучено' : 'Сначала выучи слова дня', '<a class="btn light" href="#learn">Учить</a><a class="btn ghost" href="#practice">Назад</a>');
 
@@ -464,7 +496,7 @@ function card(step = 0) {
       <div class="face card"><span class="label">Қазақша</span><div class="big">${esc(w.kz)}</div><span class="hint">нажми — перевернуть, свайп — дальше</span></div>
       <div class="face card dark back"><span class="label">По-русски</span><div class="big">${esc(w.ru)}</div></div>
     </div></div>
-    <div class="row"><button class="btn light" onclick="card(-1)">←</button><button class="btn light" onclick="F.list=shuffle(F.list);card(-F.i)">Перемешать</button><button class="btn" onclick="card(1)">→</button></div>`);
+    <div class="row"><button class="btn light" onclick="card(-1)" aria-label="Назад">${ic('left')}</button><button class="btn light" onclick="F.list=shuffle(F.list);card(-F.i)" aria-label="Перемешать">${ic('shuffle')}</button><button class="btn" onclick="card(1)" aria-label="Дальше">${ic('right')}</button></div>`);
   let x0;
   $('#fc').ontouchstart = e => { x0 = e.touches[0].clientX; };
   $('#fc').ontouchend = e => { const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 50) card(dx < 0 ? 1 : -1); };
@@ -474,7 +506,7 @@ function drill() {
   const list = shuffle(scopeWords()).slice(0, 10);
   if (!list.length) return noWords();
   startQuiz(list, { steps: 2, title: 'Заучивание', onDone: () =>
-    splash('✓', 'Готово!', `${score()} из ${Q.total} с первого раза`, '<button class="btn light" onclick="go()">Ещё раз</button><a class="btn ghost" href="#practice">Назад</a>') });
+    splash(ic('check', 40), 'Готово!', `${score()} из ${Q.total} с первого раза`, '<button class="btn light" onclick="go()">Ещё раз</button><a class="btn ghost" href="#practice">Назад</a>') });
 }
 
 function match() {
@@ -482,7 +514,7 @@ function match() {
   if (list.length < 2) return splash('', 'Мало слов', 'Для подбора нужно хотя бы 2 выученных слова', '<a class="btn ghost" href="#practice">Назад</a>');
   const tiles = shuffle(list.flatMap(k => [{ k, t: k }, { k, t: WORDS[k].ru }]));
   M = { left: list.length, start: Date.now(), sel: null };
-  view(`<div class="top"><a href="#practice" class="x">✕</a><span class="label" style="flex:1">Подбор — найди пары</span><b id="mt">0.0 с</b></div>
+  view(`<div class="top"><a href="#practice" class="x" aria-label="Закрыть">${ic('close', 18)}</a><span class="label" style="flex:1">Подбор — найди пары</span><b id="mt">0.0 с</b></div>
     <div class="tiles">${tiles.map(x => `<button class="tile" data-k="${esc(x.k)}">${esc(x.t)}</button>`).join('')}</div>`);
   const timer = setInterval(() => { const el = $('#mt'); if (!el) return clearInterval(timer); el.textContent = ((Date.now() - M.start) / 1000).toFixed(1) + ' с'; }, 100);
   $('.tiles').onclick = e => {
@@ -500,7 +532,7 @@ function match() {
     clearInterval(timer);
     const t = +((Date.now() - M.start) / 1000).toFixed(1), rec = !S.bestMatch || t < S.bestMatch;
     if (rec) { S.bestMatch = t; save(); }
-    splash(rec ? '🏆' : '✓', `${t} с`, rec ? 'Новый рекорд!' : `Рекорд: ${S.bestMatch} с`, '<button class="btn light" onclick="go()">Ещё раз</button><a class="btn ghost" href="#practice">Назад</a>');
+    splash(ic(rec ? 'trophy' : 'check', 40), `${t} с`, rec ? 'Новый рекорд!' : `Рекорд: ${S.bestMatch} с`, '<button class="btn light" onclick="go()">Ещё раз</button><a class="btn ghost" href="#practice">Назад</a>');
   };
 }
 
@@ -509,9 +541,9 @@ function tr() {
   const to = from === 'ru' ? 'kk' : 'ru';
   view(`<header class="head"><div><h1>Перевод</h1><p>Продиктуй или напиши непонятное слово</p></div></header>
     <div class="card">
-      <div class="langs"><b>${LANG[from]}</b><button class="swap" onclick="from='${to}';tr()" aria-label="Поменять языки">⇄</button><b>${LANG[to]}</b></div>
+      <div class="langs"><b>${LANG[from]}</b><button class="swap" onclick="from='${to}';tr()" aria-label="Поменять языки">${ic('swap', 18)}</button><b>${LANG[to]}</b></div>
       <form id="tf"><div class="trrow"><input id="inp" placeholder="${from === 'ru' ? 'Слово по-русски' : 'Сөз қазақша'}" autocomplete="off" spellcheck="false">
-        ${SR ? `<button type="button" id="mic" class="mic" onclick="listen()" aria-label="Продиктовать"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>` : ''}</div>
+        ${SR ? `<button type="button" id="mic" class="mic" onclick="listen()" aria-label="Продиктовать">${ic('mic', 22)}</button>` : ''}</div>
         ${from === 'kk' ? KEYS : ''}
         <button class="btn" style="margin-top:12px">Перевести</button></form>
       ${SR ? '' : '<p class="note">Голосовой ввод здесь не работает — открой сайт в Chrome или Safari.</p>'}
@@ -546,7 +578,7 @@ async function translate() {
   }
   const has = S.cards[kz] && !S.cards[kz].known;
   box.innerHTML = `<div class="card dark tr"><span class="label">${src}</span><div class="big">${esc(dir === 'ru' ? kz : ru)}</div><p>${esc(dir === 'ru' ? ru : kz)}</p>
-    ${has ? '<span class="label">Уже в твоих словах ✓</span>' : '<button class="btn" id="add">+ Учить это слово</button>'}</div>`;
+    ${has ? `<span class="label">${ic('check', 14)} Уже в твоих словах</span>` : `<button class="btn" id="add">${ic('plus', 16)} Учить это слово</button>`}</div>`;
   if (!has) $('#add').onclick = () => {
     if (!WORDS[kz]) { S.custom[kz] = ru; WORDS[kz] = { kz, ru, l: 'my' }; }
     S.cards[kz] = { box: 0, due: day(INT[0]) };
@@ -564,7 +596,7 @@ function parentHome() {
       const last = d.history[0];
       return `<section class="card dark"><span class="label">${esc(k.name)}</span>
           <div class="huge">${n} <small>${plural(n, 'день', 'дня', 'дней')} подряд</small></div>
-          <div class="stats"><div><b>${today ? '✓' : '—'}</b>сегодня</div><div><b>${learned}</b>${plural(learned, 'слово', 'слова', 'слов')}</div>
+          <div class="stats"><div><b>${today ? ic('check', 22) : '—'}</b>сегодня</div><div><b>${learned}</b>${plural(learned, 'слово', 'слова', 'слов')}</div>
             <div><b>${last ? `${last.right}/${last.total}` : '—'}</b>последний квиз</div><div><b>${d.level || 'A1'}</b>уровень</div></div></section>
         ${d.history.length ? `<div class="card list">${d.history.slice(0, 7).map(h => `<div class="hist"><span style="width:60px">${fmtDate(h.date)}</span>
           <div class="bar"><i style="width:${h.right / h.total * 100}%"></i></div><b>${h.right}/${h.total}</b></div>`).join('')}</div>` : ''}`;
@@ -577,11 +609,12 @@ const tgButton = () => ME.tgLink ? `<a class="btn" href="${ME.tgLink}" target="_
 function settings() {
   const tgBlock = `<div class="label sec">Telegram</div><div class="card">
     ${ME.role === 'student' ? `<label class="field">Время напоминания<input type="time" value="${S.remindAt}" onchange="S.remindAt=this.value;save();toast('Сохранено')"></label>` : ''}
-    <p class="note">${ME.tg ? `Подключён ✅ ${ME.role === 'parent' ? 'Сюда придут баллы за квизы и напоминания.' : 'Напомню, если слова дня не выучены.'}` : 'Telegram не подключён.'}</p>
+    <p class="note">${ME.tg ? `${ic('check', 16)} Подключён. ${ME.role === 'parent' ? 'Сюда придут баллы за квизы и напоминания.' : 'Напомню, если слова дня не выучены.'}` : 'Telegram не подключён.'}</p>
     ${ME.tg ? '<button class="btn light" onclick="testTg()">Отправить тест</button>' : tgButton()}</div>`;
   view(`<header class="head"><div><h1>Профиль</h1><p>${esc(ME.name)} · ${esc(ME.login)}</p></div></header>
     ${ME.role === 'student' ? `<div class="label sec">Уровень</div><div class="levels">${levelButtons()}</div>
-      <a class="btn light" href="#test">Определить уровень по словам</a>` : ''}
+      <a class="btn light" href="#test">Определить уровень по словам</a>
+      <div class="label sec">Слов в день</div>${perDayButtons()}` : ''}
     ${tgBlock}
     ${ME.admin ? `<div class="label sec">Аккаунты</div><div class="card list" id="acc"><p class="note">Загрузка…</p></div>
       <form class="card form" id="nu"><b>Новый аккаунт</b>
@@ -597,7 +630,7 @@ function settings() {
   $('#nu').onsubmit = async e => {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.target));
-    try { await api('POST', '/api/admin', { op: 'save', ...f }); e.target.reset(); toast('Сохранено ✅'); accounts(); }
+    try { await api('POST', '/api/admin', { op: 'save', ...f }); e.target.reset(); toast('Сохранено'); accounts(); }
     catch (err) { toast(typeof err === 'string' ? err : 'Не получилось'); }
   };
 }
@@ -606,9 +639,9 @@ async function accounts() {
   ACC = await api('GET', '/api/admin');
   const kids = ACC.filter(x => x.role === 'student');
   $('#acc').innerHTML = ACC.map(x => `<div class="w"><div><b>${esc(x.name)}</b>
-    <span>${x.login} · ${x.role === 'parent' ? 'родитель' : 'ученик'}${x.admin ? ' · админ' : ''}${x.tg ? ' · Telegram ✓' : ''}</span>
+    <span>${x.login} · ${x.role === 'parent' ? 'родитель' : 'ученик'}${x.admin ? ' · админ' : ''}${x.tg ? ' · Telegram подключён' : ''}</span>
     ${x.role === 'parent' ? `<div class="chips">${kids.map(s => `<button class="chip${x.children.includes(s.login) ? ' on' : ''}" onclick="toggleKid('${x.login}','${s.login}')">${esc(s.name)}</button>`).join('')}</div>` : ''}</div>
-    ${x.login !== ME.login ? `<button class="del" onclick="delUser('${x.login}')" aria-label="Удалить">✕</button>` : ''}</div>`).join('');
+    ${x.login !== ME.login ? `<button class="del" onclick="delUser('${x.login}')" aria-label="Удалить">${ic('close', 16)}</button>` : ''}</div>`).join('');
 }
 async function toggleKid(p, s) {
   const c = ACC.find(a => a.login === p).children;
@@ -620,7 +653,7 @@ async function delUser(l) {
   await api('POST', '/api/admin', { op: 'delete', login: l }).catch(() => toast('Не получилось'));
   accounts();
 }
-const testTg = () => api('POST', '/api/test').then(() => toast('Отправлено ✅'), e => toast(typeof e === 'string' ? e : 'Не получилось'));
+const testTg = () => api('POST', '/api/test').then(() => toast('Отправлено'), e => toast(typeof e === 'string' ? e : 'Не получилось'));
 async function logout() {
   await api('POST', '/api/logout', { unlink: inTG }).catch(() => {});
   setToken(''); location.hash = ''; location.reload();
