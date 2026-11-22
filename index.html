@@ -129,7 +129,7 @@ nav a.on{background:#000;color:#fff}
 <div id="toast"></div>
 <script src="words.js"></script>
 <script>
-const LEVELS = { A1: 'Начальный', A2: 'Базовый', B1: 'Средний', B2: 'Выше среднего', C1: 'Продвинутый' };
+const LEVELS = { A1: 'Начальный', A2: 'Базовый', B1: 'Средний', B2: 'Выше среднего', C1: 'Продвинутый', C2: 'Для эссе' };
 const WORDS = {}; // kz → { kz, ru, l }; l = уровень или 'my' для своих слов
 for (const l in LIB) for (const line of LIB[l].trim().split('\n')) { const [kz, ru] = line.split('|'); WORDS[kz] = { kz, ru, l }; }
 // Через сколько дней проверять слово: индекс = сколько раз подряд был верный ответ
@@ -147,7 +147,7 @@ const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { cons
 const norm = s => s.trim().toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ');
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const daysUntil = d => Math.round((new Date(d) - new Date(day())) / 864e5);
-const dueList = () => Object.keys(S.cards).filter(k => WORDS[k] && S.cards[k].due <= day());
+const dueList = () => Object.keys(S.cards).filter(k => WORDS[k] && !S.cards[k].known && S.cards[k].due <= day());
 const nextWord = () => Object.values(WORDS).find(w => w.l === S.level && !S.cards[w.kz]);
 const KEYS = `<div class="keys">${[...'әіңғүұқөһ'].map(ch => `<button type="button" onclick="ins('${ch}')">${ch}</button>`).join('')}</div>`;
 
@@ -245,7 +245,7 @@ function learn() {
     </div></div>
     <div class="row"><button class="btn light" onclick="know('${w.kz}')">Уже знаю</button><button class="btn" onclick="learned('${w.kz}')">Выучено ✓</button></div>`);
 }
-function know(kz) { S.cards[kz] = { box: 2, due: day(INT[2]) }; save(); toast('Проверю через неделю'); learn(); }
+function know(kz) { S.cards[kz] = { known: true }; save(); toast("Отмечено — в повторение не попадёт"); learn(); }
 function learned(kz) {
   S.cards[kz] = { box: 0, due: day(INT[0]) };
   const first = markToday();
@@ -259,7 +259,7 @@ function learned(kz) {
 function review() {
   const due = dueList();
   if (!due.length) {
-    const next = Object.values(S.cards).map(c => c.due).sort()[0];
+    const next = Object.values(S.cards).filter(c => !c.known).map(c => c.due).sort()[0];
     return view(`<div class="splash"><div class="check">✓</div><h1>Нечего повторять</h1>
       <p>${next ? `Следующая проверка через ${daysUntil(next)} ${plural(daysUntil(next), 'день', 'дня', 'дней')}` : 'Сначала выучи пару слов'}</p>
       <a class="btn ghost" href="#home">На главную</a></div>`);
@@ -384,8 +384,11 @@ async function translate() {
 
 // ---------- слова и настройки ----------
 function words() {
-  const list = Object.entries(S.cards).filter(([k]) => WORDS[k]).sort((a, b) => a[1].due.localeCompare(b[1].due));
+  const all = Object.entries(S.cards).filter(([k]) => WORDS[k]);
+  const list = all.filter(([, c]) => !c.known).sort((a, b) => a[1].due.localeCompare(b[1].due));
+  const knew = all.length - list.length;
   view(`<header class="head"><h1>Мои слова</h1><span class="pill">${list.length}</span></header>
+    ${knew ? `<p class="note" style="margin:0 4px">Ещё ${knew} ${plural(knew, 'слово', 'слова', 'слов')} отмечено «Уже знаю» — их не повторяем.</p>` : ''}
     ${list.length ? `<div class="card list">${list.map(([kz, c]) => {
       const d = daysUntil(c.due);
       return `<div class="w"><div><b>${esc(kz)}</b><span>${esc(WORDS[kz].ru)}</span></div>

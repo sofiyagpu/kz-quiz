@@ -32,7 +32,7 @@ async function tick() {
   }
   const u = db.user, today = day();
   if (db.tg.last === today || new Date().toTimeString().slice(0, 5) < (u.remindAt || '20:00')) return;
-  const due = Object.values(u.cards || {}).filter(c => c.due <= today).length, n = streak(u.days), lines = [];
+  const due = Object.values(u.cards || {}).filter(c => !c.known && c.due <= today).length, n = streak(u.days), lines = [];
   if (!(u.days || []).includes(today))
     lines.push(n ? `🔥 Стрик ${n} дн. под угрозой — выучи сегодня хотя бы одно слово!` : '🌱 Начни стрик — выучи сегодня одно слово.');
   if (due) lines.push(`🧠 Пора повторить: ${due} сл.`);
