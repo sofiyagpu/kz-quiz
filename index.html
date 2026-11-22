@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ececec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="kz-quiz">
+<title>kz-quiz</title>
+<style>
+:root{--bg:#ececec;--card:#fff;--mute:#8a8a8a;--soft:#f1f1f1;--line:#e3e3e3;--ok:#1f9d55;--bad:#d64545;--r:22px}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:#000;font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;-webkit-font-smoothing:antialiased;min-height:100dvh}
+main{max-width:560px;margin:0 auto;padding:24px 16px 120px;display:flex;flex-direction:column;gap:12px}
+a{color:inherit}
+h1{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:6px}
+.head p{color:var(--mute);font-size:14px;margin-top:4px}
+.pill{text-decoration:none;font-size:12px;font-weight:700;border:2px solid #000;border-radius:999px;padding:5px 12px;white-space:nowrap}
+.label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.sec{margin:12px 4px 0}
+.card{background:var(--card);border-radius:var(--r);padding:20px;text-decoration:none;display:block}
+.dark{background:#000;color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.num{font-size:40px;font-weight:900;letter-spacing:-.03em;line-height:1;margin-top:10px}
+.num small{font-size:15px;color:var(--mute);font-weight:600;letter-spacing:0}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:16px;font:inherit;font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#000;color:#fff;cursor:pointer;text-align:center;text-decoration:none}
+.btn.light{background:var(--soft);color:#000}
+.dark .btn{background:#fff;color:#000}
+.btn.ghost{background:transparent;color:inherit;border:2px solid currentColor;border-radius:999px}
+.btn:active,.opt:active,.card:active{transform:scale(.98)}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+
+/* стрик */
+.huge{font-size:72px;font-weight:900;letter-spacing:-.04em;line-height:1;margin-top:8px}
+.huge small{font-size:18px;font-weight:600;color:#9a9a9a;letter-spacing:0}
+.week{display:flex;justify-content:space-between;margin-top:22px}
+.wd{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:#777;text-transform:uppercase;font-weight:700}
+.wd i{width:30px;height:30px;border-radius:50%;border:2px solid #333;display:grid;place-items:center;font-style:normal}
+.wd.today{color:#fff}.wd.today i{border-color:#fff}
+.wd.on i{background:#fff;border-color:#fff}
+.wd.on i::after{content:"✓";color:#000;font-weight:900;font-size:14px}
+.cta h2{font-size:22px;font-weight:800;margin:8px 0 4px;letter-spacing:-.01em}
+.cta p{color:var(--mute);font-size:14px;margin-bottom:16px}
+
+/* карточка-переворот */
+.top{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.x{font-size:20px;text-decoration:none;font-weight:700;width:36px;height:36px;display:grid;place-items:center;background:#fff;border-radius:50%;flex:none}
+.bar{flex:1;height:8px;background:#d8d8d8;border-radius:9px;overflow:hidden}
+.bar i{display:block;height:100%;background:#000;transition:width .3s}
+.flip{perspective:1200px;height:min(56dvh,380px);cursor:pointer;user-select:none}
+.flip>div{position:relative;height:100%;transition:transform .55s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+.flip.on>div{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+.face.back{transform:rotateY(180deg)}
+.face .hint{position:absolute;bottom:18px;font-size:13px;color:var(--mute)}
+.big{font-size:clamp(30px,9vw,44px);font-weight:800;letter-spacing:-.02em;line-height:1.15;overflow-wrap:anywhere}
+
+/* тест */
+.q{min-height:180px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;text-align:center}
+.opt{display:block;width:100%;text-align:left;background:#fff;border:2px solid var(--line);border-radius:16px;padding:16px 18px;font:inherit;font-weight:600;cursor:pointer;color:#000}
+#opts{display:flex;flex-direction:column;gap:10px}
+#opts.lock{pointer-events:none}
+.opt.ok{border-color:var(--ok);background:#e8f6ee}
+.opt.bad{border-color:var(--bad);background:#fdecec}
+input{width:100%;font:inherit;font-size:20px;padding:16px 18px;border:2px solid var(--line);border-radius:16px;background:#fff;outline:none;color:#000}
+input:focus{border-color:#000}
+.keys{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.keys button{flex:1;min-width:34px;padding:10px 0;border:0;border-radius:10px;background:#fff;font:inherit;font-size:18px;font-weight:600;cursor:pointer}
+.fb{padding:14px 18px;border-radius:16px;font-weight:600;margin-bottom:10px}
+.fb.good{background:#e8f6ee;color:var(--ok)}
+.fb.wrong{background:#fdecec;color:var(--bad)}
+.fb b{color:#000}
+
+/* финальные экраны */
+.splash{min-height:calc(100dvh - 48px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;background:#000;color:#fff;border-radius:var(--r);padding:32px 24px}
+.splash p{color:#aaa}
+.splash .btn{max-width:280px}
+.logo{font-size:56px;font-weight:900;letter-spacing:.04em;border-bottom:3px solid #fff;padding-bottom:4px}
+.check{width:84px;height:84px;border:3px solid #fff;border-radius:50%;display:grid;place-items:center;font-size:40px}
+.splash form{width:100%;max-width:280px;display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.splash input{background:#1a1a1a;border-color:#333;color:#fff}
+
+/* список слов */
+.list{padding:6px 20px}
+.w{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.w:last-child{border:0}
+.w span{display:block;color:var(--mute);font-size:14px}
+.lv{text-align:right;flex:none}
+.dots{display:flex;gap:3px;justify-content:flex-end}
+.dots i{width:8px;height:8px;border-radius:50%;background:#ddd}
+.dots i.on{background:#000}
+.lv small{font-size:11px;color:var(--mute)}
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.lvb{background:#fff;border:2px solid transparent;border-radius:18px;padding:14px 8px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:#000}
+.lvb b{font-size:22px}
+.lvb span{font-size:12px;font-weight:600}
+.lvb small{font-size:11px;color:var(--mute)}
+.lvb.on{background:#000;color:#fff;border-color:#000}
+.field{display:flex;justify-content:space-between;align-items:center;font-weight:600;gap:12px}
+.field input{width:auto;font-size:17px;padding:8px 12px}
+.note{color:var(--mute);font-size:14px;margin:14px 0}
+.note b{color:#000}
+
+nav{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:4px;padding:6px;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+nav a{padding:11px 18px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;white-space:nowrap}
+nav a.on{background:#000;color:#fff}
+#toast{position:fixed;top:16px;left:50%;transform:translate(-50%,-80px);background:#000;color:#fff;padding:12px 18px;border-radius:999px;font-weight:600;font-size:14px;transition:transform .3s;z-index:9;max-width:calc(100% - 32px);text-align:center}
+#toast.on{transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav hidden><a href="#home">Главная</a><a href="#words">Слова</a><a href="#settings">Настройки</a></nav>
+<div id="toast"></div>
+<script>
+// Словарь: слово|перевод. Порядок = порядок изучения.
+const RAW = {
+A1: `сәлем|привет
+рахмет|спасибо
+иә|да
+жоқ|нет
+кешіріңіз|извините
+сау болыңыз|до свидания
+мен|я
+сен|ты
+сіз|вы (вежливо)
+ол|он, она
+біз|мы
+олар|они
+ана|мать
+әке|отец
+бала|ребёнок
+аға|старший брат
+әпке|старшая сестра
+іні|младший брат
+дос|друг
+үй|дом
+су|вода
+нан|хлеб
+шай|чай
+сүт|молоко
+ет|мясо
+алма|яблоко
+тамақ|еда
+кітап|книга
+мектеп|школа
+қала|город
+көше|улица
+есік|дверь
+терезе|окно
+үстел|стол
+орындық|стул
+күн|день; солнце
+түн|ночь
+таңертең|утром
+кеш|вечер
+бүгін|сегодня
+ертең|завтра
+кеше|вчера
+бір|один
+екі|два
+үш|три
+төрт|четыре
+бес|пять
+алты|шесть
+жеті|семь
+сегіз|восемь
+тоғыз|девять
+он|десять
+жүз|сто
+мың|тысяча
+үлкен|большой
+кіші|маленький
+жақсы|хороший
+жаман|плохой
+ақ|белый
+қара|чёрный
+қызыл|красный
+көк|синий, голубой
+жасыл|зелёный
+сары|жёлтый
+ит|собака
+мысық|кошка
+ат|лошадь
+құс|птица
+бас|голова
+көз|глаз
+қол|рука
+аяқ|нога
+ақша|деньги
+уақыт|время
+жыл|год
+ай|месяц; луна
+апта|неделя
+келу|приходить
+бару|идти (туда)
+жеу|есть (кушать)
+ішу|пить
+оқу|читать; учиться
+жазу|писать
+көру|видеть
+сөйлеу|говорить`,
+A2: `отбасы|семья
+жұмыс|работа
+дүкен|магазин
+базар|рынок
+аурухана|больница
+дәрігер|врач
+мұғалім|учитель
+оқушы|ученик
+пәтер|квартира
+бөлме|комната
+ас үй|кухня
+киім|одежда
+көйлек|платье; рубашка
+аяқ киім|обувь
+ауа райы|погода
+жаңбыр|дождь
+қар|снег
+жел|ветер
+суық|холодный
+ыстық|горячий, жаркий
+жылы|тёплый
+көктем|весна
+жаз|лето
+күз|осень
+қыс|зима
+дүйсенбі|понедельник
+сейсенбі|вторник
+сәрсенбі|среда
+бейсенбі|четверг
+жұма|пятница
+сенбі|суббота
+жексенбі|воскресенье
+сағат|час; часы
+көрші|сосед
+қонақ|гость
+сұрақ|вопрос
+жауап|ответ
+тіл|язык
+сөз|слово
+әріп|буква
+сурет|картина; фото
+ән|песня
+би|танец
+ойын|игра
+жол|дорога
+пойыз|поезд
+ұшақ|самолёт
+көлік|машина, транспорт
+аялдама|остановка
+оң|правый
+сол|левый
+алыс|далеко
+жақын|близко
+тез|быстро
+баяу|медленно
+қымбат|дорогой
+арзан|дешёвый
+жаңа|новый
+ескі|старый (о вещах)
+әдемі|красивый
+ақылды|умный
+бақытты|счастливый
+шаршау|уставать
+ұйықтау|спать
+тұру|вставать; стоять
+отыру|сидеть
+жүгіру|бегать
+тыңдау|слушать
+түсіну|понимать
+білу|знать
+сұрау|спрашивать
+сатып алу|покупать
+сату|продавать
+ашу|открывать
+жабу|закрывать
+көмектесу|помогать
+күту|ждать
+іздеу|искать
+табу|находить
+жуу|мыть
+пісіру|готовить (еду)
+бастау|начинать
+бітіру|заканчивать`,
+B1: `мүмкіндік|возможность
+тәжірибе|опыт
+білім|знание; образование
+ғылым|наука
+табиғат|природа
+қоршаған орта|окружающая среда
+мемлекет|государство
+ел|страна
+халық|народ
+тарих|история
+мәдениет|культура
+дәстүр|традиция
+мереке|праздник
+той|торжество, пир
+қоғам|общество
+заң|закон
+құқық|право
+міндет|обязанность
+шешім|решение
+мақсат|цель
+жоспар|план
+нәтиже|результат
+себеп|причина
+салдар|последствие
+мәселе|проблема
+пікір|мнение
+ой|мысль
+сезім|чувство
+қуаныш|радость
+қайғы|горе, печаль
+үміт|надежда
+сенім|доверие; вера
+құрмет|уважение
+махаббат|любовь
+достық|дружба
+бостандық|свобода
+денсаулық|здоровье
+ауру|болезнь
+кәсіп|профессия, дело
+жалақы|зарплата
+кеңсе|офис
+кездесу|встреча; встречаться
+келісім|соглашение
+дау|спор
+тәуелсіздік|независимость
+болашақ|будущее
+өткен|прошлое
+қазіргі|нынешний, современный
+маңызды|важный
+қиын|трудный
+оңай|лёгкий (простой)
+қауіпті|опасный
+пайдалы|полезный
+қажет|нужный, необходимо
+міндетті|обязательный
+мүмкін|возможно
+әрине|конечно
+сондықтан|поэтому
+себебі|потому что
+бірақ|но
+алайда|однако
+егер|если
+әйтпесе|иначе
+дегенмен|тем не менее
+дамыту|развивать
+өзгерту|изменять
+жақсарту|улучшать
+шешу|решать
+талқылау|обсуждать
+дәлелдеу|доказывать
+ұсыну|предлагать
+қабылдау|принимать
+қолдау|поддерживать
+сақтау|хранить
+жеткізу|доставлять
+ұмыту|забывать
+есте сақтау|запоминать
+таңдау|выбирать; выбор
+салыстыру|сравнивать
+сендіру|убеждать
+жауапкершілік|ответственность
+тәрбие|воспитание
+ұрпақ|поколение
+жер|земля
+аспан|небо
+тау|гора
+өзен|река
+көл|озеро
+дала|степь`};
+const LEVELS = { A1: 'Начальный', A2: 'Базовый', B1: 'Средний' };
+const WORDS = {};
+for (const l in RAW) for (const line of RAW[l].split('\n')) { const [kz, ru] = line.split('|'); WORDS[kz] = { kz, ru, l }; }
+// Через сколько дней проверять слово: индекс = сколько раз подряд был верный ответ
+const INT = [1, 3, 7, 14, 30, 60, 120];
+
+const $ = s => document.querySelector(s);
+const app = $('#app'), nav = $('nav');
+const day = (n = 0) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toLocaleDateString('sv'); };
+const streak = (days = []) => { const s = new Set(days); let n = 0, i = s.has(day()) ? 0 : -1; while (s.has(day(i))) n++, i--; return n; };
+const plural = (n, a, b, c) => { const m = n % 100, k = n % 10; return m > 10 && m < 20 ? c : k === 1 ? a : k > 1 && k < 5 ? b : c; };
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const norm = s => s.trim().toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ');
+const daysUntil = d => Math.round((new Date(d) - new Date(day())) / 864e5);
+const dueList = () => Object.keys(S.cards).filter(k => WORDS[k] && S.cards[k].due <= day());
+const nextWord = () => Object.values(WORDS).find(w => w.l === S.level && !S.cards[w.kz]);
+
+let S = { level: 'A1', remindAt: '20:00', cards: {}, days: [] }, tgOk = false, Q;
+let pass = localStorage.getItem('pass') || '';
+
+async function api(method, url, body) {
+  const r = await fetch(url, { method, headers: { 'x-pass': pass, 'content-type': 'application/json' }, body: body && JSON.stringify(body) });
+  if (!r.ok) throw r.status;
+  return r.json();
+}
+async function load() { const r = await api('GET', '/api/state'); S = { ...S, ...r.user }; tgOk = r.tg; }
+// ponytail: последняя запись побеждает; телефон и ПК синхронизируются при возврате во вкладку
+const save = () => api('PUT', '/api/state', S).catch(() => toast('Не сохранилось — проверь интернет'));
+
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2500); }
+function view(html, withNav) { app.innerHTML = html; nav.hidden = !withNav; scrollTo(0, 0); }
+
+// ---------- экраны ----------
+function home() {
+  const today = day(), done = S.days.includes(today), n = streak(S.days), due = dueList().length;
+  const inLevel = Object.values(WORDS).filter(w => w.l === S.level);
+  const known = inLevel.filter(w => S.cards[w.kz]).length;
+  const week = [-6, -5, -4, -3, -2, -1, 0].map(i => {
+    const d = day(i), wd = new Date(d + 'T12:00').toLocaleDateString('ru', { weekday: 'short' });
+    return `<div class="wd${S.days.includes(d) ? ' on' : ''}${i ? '' : ' today'}"><i></i>${wd}</div>`;
+  }).join('');
+  view(`
+    <header class="head"><div><h1>kz-quiz</h1><p>${new Date().toLocaleDateString('ru', { weekday: 'long', day: 'numeric', month: 'long' })}</p></div>
+      <a class="pill" href="#settings">${S.level} · ${LEVELS[S.level]}</a></header>
+    <section class="card dark">
+      <span class="label">Стрик</span>
+      <div class="huge">${n} <small>${plural(n, 'день', 'дня', 'дней')} подряд</small></div>
+      <div class="week">${week}</div>
+    </section>
+    <a class="card cta" href="#learn">
+      <span class="label">Слово дня</span>
+      <h2>${done ? 'Сегодня выполнено ✓' : 'Выучи новое слово'}</h2>
+      <p>${done ? 'Можно взять ещё одно — про запас' : n ? 'Иначе стрик сгорит в полночь' : 'Одно слово — и стрик начат'}</p>
+      <span class="btn">${done ? 'Ещё слово' : 'Учить'}</span>
+    </a>
+    <div class="grid">
+      <a class="card${due ? ' dark' : ''}" href="#review"><span class="label">Повторить</span><div class="num">${due}</div></a>
+      <a class="card" href="#words"><span class="label">Выучено</span><div class="num">${known}<small> / ${inLevel.length}</small></div></a>
+    </div>`, true);
+}
+
+function learn() {
+  const w = nextWord();
+  if (!w) return view(`<div class="splash"><div class="check">✓</div><h1>Уровень ${S.level} пройден</h1><p>Выбери следующий уровень в настройках</p><a class="btn light" href="#settings">Настройки</a><a class="btn ghost" href="#home">На главную</a></div>`);
+  view(`
+    <div class="top"><a href="#home" class="x">✕</a><span class="label">Новое слово · ${S.level}</span></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div>
+      <div class="face card"><span class="label">Қазақша</span><div class="big">${w.kz}</div><span class="hint">нажми, чтобы перевернуть</span></div>
+      <div class="face card dark back"><span class="label">По-русски</span><div class="big">${w.ru}</div><span class="hint">${w.kz}</span></div>
+    </div></div>
+    <div class="row"><button class="btn light" onclick="know('${w.kz}')">Уже знаю</button><button class="btn" onclick="learned('${w.kz}')">Выучено ✓</button></div>`);
+}
+function know(kz) { S.cards[kz] = { box: 2, due: day(INT[2]) }; save(); toast('Проверю через неделю'); learn(); }
+function learned(kz) {
+  S.cards[kz] = { box: 0, due: day(INT[0]) };
+  const first = !S.days.includes(day());
+  if (first) S.days.push(day());
+  save();
+  if (!first) { toast('Проверю завтра'); return learn(); }
+  const n = streak(S.days);
+  view(`<div class="splash"><div class="check">🔥</div><h1>${n} ${plural(n, 'день', 'дня', 'дней')}</h1><p>Стрик продлён! Слово проверю завтра.</p>
+    <button class="btn light" onclick="learn()">Ещё слово</button><a class="btn ghost" href="#home">На главную</a></div>`);
+}
+
+function review() {
+  const due = dueList();
+  if (!due.length) {
+    const next = Object.values(S.cards).map(c => c.due).sort()[0];
+    return view(`<div class="splash"><div class="check">✓</div><h1>Нечего повторять</h1>
+      <p>${next ? `Следующая проверка через ${daysUntil(next)} ${plural(daysUntil(next), 'день', 'дня', 'дней')}` : 'Сначала выучи пару слов'}</p>
+      <a class="btn ghost" href="#home">На главную</a></div>`);
+  }
+  Q = { queue: shuffle(due), total: due.length, done: 0, right: 0, seen: new Set() };
+  ask();
+}
+
+// Первый ответ на карточку двигает её интервал; ошибка — карточка вернётся в конец очереди
+function answer(ok) {
+  const kz = Q.queue.shift(), c = S.cards[kz];
+  if (!Q.seen.has(kz)) {
+    Q.seen.add(kz);
+    if (ok) { c.box = Math.min(c.box + 1, INT.length - 1); Q.right++; } else c.box = 0;
+    c.due = day(INT[c.box]);
+    save();
+  }
+  if (ok) Q.done++; else Q.queue.push(kz);
+  ask();
+}
+
+function ask() {
+  if (!Q.queue.length) return view(`<div class="splash"><div class="check">✓</div><h1>Готово!</h1>
+    <p>${Q.right} из ${Q.total} с первого раза</p><a class="btn ghost" href="#home">На главную</a></div>`);
+  const kz = Q.queue[0], w = WORDS[kz], c = S.cards[kz];
+  const head = `<div class="top"><a href="#home" class="x">✕</a><div class="bar"><i style="width:${Q.done / Q.total * 100}%"></i></div><span class="label">${Q.done}/${Q.total}</span></div>`;
+
+  if (c.box >= 2) { // знакомые слова — вписать ответ
+    view(head + `<div class="card q"><span class="label">Напиши по-казахски</span><div class="big">${w.ru}</div></div>
+      <form id="f"><input id="inp" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Ответ…">
+      <div class="keys">${[...'әіңғүұқөһ'].map(ch => `<button type="button" onclick="ins('${ch}')">${ch}</button>`).join('')}</div>
+      <div id="fb"></div><button class="btn" id="go">Проверить</button></form>`);
+    const inp = $('#inp');
+    inp.focus();
+    let res = null;
+    $('#f').onsubmit = e => {
+      e.preventDefault();
+      if (res !== null) return answer(res);
+      if (!norm(inp.value)) return;
+      res = norm(inp.value) === norm(kz);
+      inp.readOnly = true;
+      $('.keys').remove();
+      if (res) { $('#fb').innerHTML = '<div class="fb good">Верно!</div>'; return setTimeout(() => answer(true), 700); }
+      $('#fb').innerHTML = `<div class="fb wrong">Правильно: <b>${kz}</b></div>`;
+      $('#go').textContent = 'Дальше';
+      $('#go').insertAdjacentHTML('beforebegin', '<button type="button" class="btn light" style="margin-bottom:10px" onclick="answer(true)">Засчитать как верно</button>');
+    };
+    return;
+  }
+
+  const toKz = Math.random() < .5;
+  const pool = Object.values(WORDS).filter(x => x.l === w.l && x.kz !== kz);
+  const opts = shuffle([w, ...shuffle(pool).slice(0, 3)]);
+  view(head + `<div class="card q"><span class="label">${toKz ? 'Как по-казахски?' : 'Что значит?'}</span><div class="big">${toKz ? w.ru : kz}</div></div>
+    <div id="opts">${opts.map(o => `<button class="opt" data-k="${o.kz}">${toKz ? o.kz : o.ru}</button>`).join('')}</div><div id="fb"></div>`);
+  $('#opts').onclick = e => {
+    const b = e.target.closest('.opt');
+    if (!b) return;
+    $('#opts').classList.add('lock');
+    const ok = b.dataset.k === kz;
+    b.classList.add(ok ? 'ok' : 'bad');
+    if (ok) return setTimeout(() => answer(true), 600);
+    $(`.opt[data-k="${kz}"]`).classList.add('ok');
+    $('#fb').innerHTML = '<button class="btn" id="nx" onclick="answer(false)">Дальше</button>';
+  };
+}
+function ins(ch) { const i = $('#inp'); if (i.readOnly) return; i.setRangeText(ch, i.selectionStart, i.selectionEnd, 'end'); i.focus(); }
+
+function words() {
+  const list = Object.entries(S.cards).filter(([k]) => WORDS[k]).sort((a, b) => a[1].due.localeCompare(b[1].due));
+  view(`<header class="head"><h1>Мои слова</h1><span class="pill">${list.length}</span></header>
+    ${list.length ? `<div class="card list">${list.map(([kz, c]) => {
+      const d = daysUntil(c.due);
+      return `<div class="w"><div><b>${kz}</b><span>${WORDS[kz].ru}</span></div>
+        <div class="lv"><div class="dots">${INT.slice(1).map((_, i) => `<i class="${i < c.box ? 'on' : ''}"></i>`).join('')}</div>
+        <small>${d <= 0 ? 'повторить сегодня' : `через ${d} ${plural(d, 'день', 'дня', 'дней')}`}</small></div></div>`;
+    }).join('')}</div>` : `<a class="card" href="#learn">Пока пусто. <b>Выучи первое слово →</b></a>`}`, true);
+}
+
+function settings() {
+  const lv = Object.keys(LEVELS).map(l => {
+    const all = Object.values(WORDS).filter(w => w.l === l), got = all.filter(w => S.cards[w.kz]).length;
+    return `<button class="lvb${S.level === l ? ' on' : ''}" onclick="S.level='${l}';save();settings()"><b>${l}</b><span>${LEVELS[l]}</span><small>${got}/${all.length}</small></button>`;
+  }).join('');
+  view(`<header class="head"><h1>Настройки</h1></header>
+    <div class="label sec">Уровень</div><div class="levels">${lv}</div>
+    <div class="label sec">Напоминание в Telegram</div>
+    <div class="card">
+      <label class="field">Время напоминания<input type="time" value="${S.remindAt}" onchange="S.remindAt=this.value;save();toast('Сохранено')"></label>
+      <p class="note">${tgOk ? 'Бот подключён ✅ Напишет, если за день не выучено слово или есть что повторить.' : 'Бот не подключён. Напиши своему боту <b>/start</b> — подключится в течение минуты.'}</p>
+      ${tgOk ? '<button class="btn light" onclick="testTg()">Отправить тест</button>' : ''}
+    </div>
+    <button class="btn ghost" style="margin-top:12px" onclick="logout()">Выйти</button>`, true);
+}
+const testTg = () => api('POST', '/api/test').then(() => toast('Отправлено ✅'), () => toast('Не получилось — проверь BOT_TOKEN'));
+function logout() { localStorage.removeItem('pass'); pass = ''; login(); }
+
+function login(wrong) {
+  view(`<div class="splash"><div class="logo">kz-quiz</div><p>казахский каждый день</p>
+    <form onsubmit="event.preventDefault();pass=this.p.value;localStorage.setItem('pass',pass);boot()">
+      <input name="p" type="password" placeholder="Пароль" autofocus><button class="btn light">Войти</button></form></div>`);
+  if (wrong) toast('Неверный пароль');
+}
+
+// ---------- запуск ----------
+const routes = { home, learn, review, words, settings };
+function go() {
+  const r = location.hash.slice(1);
+  (routes[r] || home)();
+  nav.querySelectorAll('a').forEach(a => a.classList.toggle('on', a.hash === '#' + (routes[r] ? r : 'home')));
+}
+async function boot() {
+  try { await load(); go(); }
+  catch (e) { e === 401 ? login(!!pass) : view('<div class="splash"><h1>Сервер недоступен</h1><button class="btn light" onclick="boot()">Ещё раз</button></div>'); }
+}
+addEventListener('hashchange', go);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !pass) return;
+  load().then(() => ['', 'home', 'words', 'settings'].includes(location.hash.slice(1)) && go()).catch(() => {});
+});
+addEventListener('keydown', e => { // ПК: 1–4 — варианты, пробел — перевернуть
+  if (e.target.tagName === 'INPUT') return;
+  const o = document.querySelectorAll('.opt')[e.key - 1];
+  if (o) return o.click();
+  if (e.key === ' ' && $('.flip')) { e.preventDefault(); $('.flip').classList.toggle('on'); }
+  if (e.key === 'Enter') $('#nx')?.click();
+});
+boot();
+</script>
+</body>
+</html>
