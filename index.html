@@ -239,7 +239,9 @@ const report = body => api('POST', '/api/report', body).catch(() => {});
 
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2500); }
 function view(html, withNav) { app.innerHTML = html; nav.hidden = !withNav; scrollTo(0, 0); }
+// Стрик засчитывают: слова дня, квиз, заучивание
 function markToday() { const first = !S.days.includes(day()); if (first) S.days.push(day()); return first; }
+const streakLine = first => first ? `<br>${ic('flame', 18)} Стрик: ${streak(S.days)} ${plural(streak(S.days), 'день', 'дня', 'дней')}` : '';
 const topBar = (back, pct, label) => `<div class="top"><a href="${back}" class="x" aria-label="Закрыть">${ic('close', 18)}</a><div class="bar"><i style="width:${pct * 100}%"></i></div><span class="label">${label}</span></div>`;
 const splash = (icon, title, text, buttons) => view(`<div class="splash">${icon ? `<div class="check">${icon}</div>` : ''}<h1>${title}</h1><p>${text}</p>${buttons}</div>`);
 const homeBtn = '<a class="btn ghost" href="#home">На главную</a>';
@@ -464,10 +466,11 @@ function quiz() {
 function quizDone() {
   const right = score(), total = Q.total, pct = Math.round(right / total * 100);
   S.history = [{ date: day(), right, total }, ...S.history].slice(0, 30);
+  const first = markToday();
   save();
   report({ kind: 'quiz', right, total, items: Object.entries(Q.first).map(([kz, ok]) => ({ kz, ru: WORDS[kz].ru, ok })) });
   view(`<div class="splash"><span class="label">Баллы</span><div class="logo">${right}/${total}</div>
-    <p>${pct}% с первого раза${pct === 100 ? ' — идеально!' : ''}</p>${dueList().length ? `<button class="btn light" onclick="quiz()">Ещё ${dueList().length} ждут</button>` : ''}${homeBtn}</div>`);
+    <p>${pct}% с первого раза${pct === 100 ? ' — идеально!' : ''}${streakLine(first)}</p>${dueList().length ? `<button class="btn light" onclick="quiz()">Ещё ${dueList().length} ждут</button>` : ''}${homeBtn}</div>`);
 }
 
 // ---------- практика (как в Quizlet) ----------
@@ -518,8 +521,8 @@ function card(step = 0) {
 function drill() {
   const list = shuffle(scopeWords()).slice(0, 10);
   if (!list.length) return noWords();
-  startQuiz(list, { title: 'Заучивание', onDone: () =>
-    splash(ic('check', 40), 'Готово!', `${score()} из ${Q.total} с первого раза`, '<button class="btn light" onclick="go()">Ещё раз</button><a class="btn ghost" href="#practice">Назад</a>') });
+  startQuiz(list, { title: 'Заучивание', onDone: () => { const first = markToday(); save();
+    splash(ic('check', 40), 'Готово!', `${score()} из ${Q.total} с первого раза${streakLine(first)}`, '<button class="btn light" onclick="go()">Ещё раз</button><a class="btn ghost" href="#practice">Назад</a>'); } });
 }
 
 // ---------- перевод ----------
